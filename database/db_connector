@@ -1,0 +1,8 @@
+# db_config.py
+
+db_config = {
+    'host': 'eshop.cjqcisyogjs1.eu-west-1.rds.amazonaws.com',  # or 'localhost' if local
+    'user': 'your-username',
+    'password': 'your-password',
+    'database': 'eshop'
+}

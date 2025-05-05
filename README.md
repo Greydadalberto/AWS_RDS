@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 AWS_RDS
+=======
+>>>>>>> 946f76b (updated code)
 
 # AWS RDS MySQL Project
 
