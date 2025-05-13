@@ -1,0 +1,22 @@
+# AWS RDS + Flask API Project
+
+## 📦 Project Structure
+
+- `db/create_tables.sql` – SQL to create the database and tables
+- `db/insert_data.sql` – Sample data for the tables
+- `api/app.py` – Flask API with endpoint for queries
+- `screenshots/` – Screenshots of the database and API outputs
+- `requirements.txt` – Python dependencies
+
+## 🚀 Running the Flask API
+
+1. Clone the repo
+2. Set up a virtual environment:
+3. Install dependencies:
+4. Run the app:
+5. Visit:
+- Root: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+- Top Customers: [http://127.0.0.1:5000/top-customers](http://127.0.0.1:5000/top-customers)
+
+## 📸 Screenshots
+Screenshots of query results and API responses can be found in the `screenshots/` folder.
