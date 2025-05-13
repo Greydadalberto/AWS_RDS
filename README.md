@@ -1,81 +1,254 @@
-<<<<<<< HEAD
-AWS_RDS
-=======
->>>>>>> 946f76b (updated code)
+# AWS RDS + MySQL + Flask API Project (Eshop)
 
-# AWS RDS MySQL Project
+This beginner-friendly project demonstrates how to:
 
-This project demonstrates how to set up a MySQL database on AWS RDS, populate it with sample data, run SQL queries, and build a simple Flask API to expose query results.
+* Set up a **MySQL database** on **AWS RDS**
+* Create tables and insert data using SQL scripts
+* Query the database
+* Build a simple **Flask API** to expose your data
+* Push everything to **GitHub**
 
 ---
 
 ## 📁 Project Structure
-AWS_RDS/
-│
-├── app.py # Flask API for executing queries
-├── db_setup.sql # SQL script to create tables and insert data
-├── queries.sql # SQL script containing advanced queries
-├── requirements.txt # Python package dependencies
-├── README.md # This documentation
-├── /screenshots # Screenshots of query results
-└── /api_docs # API documentation
 
+```
+AWS_RDS/
+|
+|├— create_tables.sql       # SQL script to create tables
+|├— insert_data.sql         # SQL script to insert sample data
+|├— query_scripts.sql       # SQL queries for reporting
+|
+|├— app.py                  # Flask app with endpoints
+|├— requirements.txt        # Python dependencies
+|
+|└— screenshots/            # Screenshots of SQL results
+    └— top_customers.png
+       monthly_sales.png
+       products_never_ordered.png
+       avg_order_value_country.png
+       frequent_buyers.png
+
+README.md               # This file
+```
 
 ---
 
-## ✅ Steps Taken
+## ✅ Part 1: AWS RDS Setup
 
-### 1. **Create RDS MySQL Instance**
-- Launched a MySQL DB instance on AWS RDS.
-- Created database named: `eshop`.
-- Saved endpoint, username, and password for later use.
+1. Log in to AWS Console.
+2. Go to **RDS > Create Database**.
+3. Choose:
 
-### 2. **Connect to RDS from CLI**
+   * **Engine**: MySQL
+   * **DB Name**: `eshop`
+   * **Username**: `admin`
+   * **Password**: `your_password_here`
+4. Allow public access and add your IP in the security group.
+
+---
+
+## 💄 Part 2: Create Tables & Insert Data
+
+1. Open a terminal and connect to your RDS DB:
+
 ```bash
-mysql -h eshop.cjqcisyogjs1.eu-west-1.rds.amazonaws.com -P 3306 -u admin -p
+mysql -h your-endpoint.rds.amazonaws.com -u admin -p
+```
 
-# AWS RDS MySQL Exercise: E-Shop Analytics
+2. Select your database:
 
-## Overview
-This project demonstrates how to set up a MySQL database using AWS RDS, populate it with e-commerce data, and run analytical SQL queries.
+```sql
+USE eshop;
+```
 
-## Setup
+3. Run scripts:
 
-1. **AWS RDS Setup**:
-   - MySQL 8.x
-   - Public access enabled
-   - Database name: `eshop`
+```sql
+source create_tables.sql;
+source insert_data.sql;
+```
 
-2. **Tables and Data**:
-   - Four tables: `customers`, `products`, `orders`, `order_items`
-   - Data inserted via SQL scripts
+---
 
-## SQL Queries
+## 🔍 Part 3: SQL Query Results
 
-1. **Top Customers by Spending** – Aggregates total spend per customer.
-2. **Monthly Sales Report** – Shows monthly sales for shipped/delivered orders.
-3. **Products Never Ordered** – Lists products with no sales.
-4. **Average Order Value by Country** – Average spend per order grouped by country.
-5. **Frequent Buyers** – Customers with more than one order.
+### 1. ✨ Top Customers by Spending
 
-All queries can be found in `sql/queries.sql`.
+```sql
+SELECT c.name, SUM(oi.quantity * oi.unit_price) AS total_spent
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status IN ('Shipped', 'Delivered')
+GROUP BY c.customer_id
+ORDER BY total_spent DESC;
+```
 
-## Screenshots
+**Result:**
 
-All screenshots of query results are available in the `screenshots/` directory.
+```
++---------------+--------------+
+| name          | total_spent  |
++---------------+--------------+
+| Alice Smith   | 1691.00      |
+| Charlie Zhang | 1200.00      |
++---------------+--------------+
+```
 
-## Optional API
+### 2. 📅 Monthly Sales Report (Shipped/Delivered)
 
-A basic API exposing each SQL query is available in the `api/` folder (optional). See `api-docs/endpoints.md` for documentation.
+```sql
+SELECT MONTH(order_date) AS month, SUM(oi.quantity * oi.unit_price) AS total_sales
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status IN ('Shipped', 'Delivered')
+GROUP BY MONTH(order_date);
+```
 
-## How to Run
+**Result:**
 
-1. Connect to your RDS instance using MySQL client.
-2. Run `create_tables.sql` and `insert_data.sql`.
-3. Run queries from `queries.sql`.
+```
++--------+-------------+
+| month  | total_sales |
++--------+-------------+
+| 11     | 1371.00     |
+| 12     | 320.00      |
++--------+-------------+
+```
 
-## Author
+### 3. ❌ Products Never Ordered
 
-[GreydadAlberto]  
-[5/5/25]
+```sql
+SELECT * FROM products
+WHERE product_id NOT IN (
+  SELECT DISTINCT product_id FROM order_items
+);
+```
+
+**Result:**
+
+```
+(No products left un-ordered)
+```
+
+### 4. 🌎 Average Order Value by Country
+
+```sql
+SELECT c.country, AVG(order_total) AS avg_order_value
+FROM (
+  SELECT o.order_id, o.customer_id,
+         SUM(oi.quantity * oi.unit_price) AS order_total
+  FROM orders o
+  JOIN order_items oi ON o.order_id = oi.order_id
+  WHERE o.status IN ('Shipped', 'Delivered')
+  GROUP BY o.order_id
+) t
+JOIN customers c ON c.customer_id = t.customer_id
+GROUP BY c.country;
+```
+
+**Result:**
+
+```
++---------+------------------+
+| country | avg_order_value  |
++---------+------------------+
+| USA     | 845.50           |
++---------+------------------+
+```
+
+### 5. ⭐ Frequent Buyers (More Than One Order)
+
+```sql
+SELECT c.name, COUNT(*) AS num_orders
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+GROUP BY c.customer_id
+HAVING COUNT(*) > 1;
+```
+
+**Result:**
+
+```
++-------------+-------------+
+| name        | num_orders |
++-------------+-------------+
+| Alice Smith | 2          |
++-------------+-------------+
+```
+
+Screenshots of these results are saved in the `/screenshots` directory.
+
+---
+
+## 🌐 Part 4: Flask API
+
+1. From the project folder:
+
+```bash
+cd AWS_RDS
+python3 app.py
+```
+
+2. Access in your browser: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+### API Endpoints:
+
+| Endpoint         | Description               |
+| ---------------- | ------------------------- |
+| `/`              | Welcome message           |
+| `/top-customers` | Top customers by spending |
+
+### Hosted API (Optional)
+
+If deployed, your endpoint will look like:
+
+```
+http://your-ec2-ip:5000/top-customers
+```
+
+Ask for help if you'd like to deploy this on EC2 or use Docker.
+
+---
+
+## 🗲 Requirements
+
+`requirements.txt`:
+
+```
+Flask
+mysql-connector-python
+```
+
+Install with:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🚀 GitHub Setup
+
+```bash
+git init
+git remote add origin https://github.com/Greydadalberto/AWS_RDS.git
+git checkout -b main
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+```
+
+---
+
+## 🤝 Author
+
+**Derrick Alberto Darku**
+Amalitech DevOps Trainee
+Email: [derrick.alberto-darku@amalitechtraining.org](mailto:derrick.alberto-darku@amalitechtraining.org)
+
+---
+
+## 📚 Keywords
 
